@@ -71,6 +71,8 @@ const usePay = (authorId: number, modalDisclosureControl?: ModalDisclosureContro
     const { cell } = await createCell(orderId);
 
     const trCost = calcComission(1);
+    console.log(trCost, 'trCost');
+
     const trRes = await payProcess(cell, trCost);
     console.log(trRes, 'trRes');
 
