@@ -1,6 +1,6 @@
 'use client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { calcComission } from '@/modules/partner-balance/helpers/calc-comission';
+import { hasEnoughForComission } from '@/modules/partner-balance/helpers/calc-comission';
 import { useAccount } from '@/shared/hooks/api/useAccount';
 import { useTon } from '@/shared/hooks/api/useTon';
 import { useDisclosure } from '@/shared/hooks/useDisclosure';
@@ -143,7 +143,7 @@ type ActionColumnProps = {
 
 const ActionColumn: FC<ActionColumnProps> = ({ record, payOrder, createCell, deleteOrder, address, onOpenModal }) => {
   const { data: userTonBalance } = useTon(address);
-  const isBalanceSufficient = calcComission(Number((userTonBalance?.balance ?? 0)), 1);
+  const isBalanceSufficient = hasEnoughForComission(Number(userTonBalance?.balance ?? 0), 1);
 
   const handlePayAction = () =>
     isBalanceSufficient

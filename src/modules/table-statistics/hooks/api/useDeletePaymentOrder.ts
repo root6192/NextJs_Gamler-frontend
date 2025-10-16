@@ -78,7 +78,10 @@ const useDeletePaymentOrder = (authorId: number, onClose?: OnClose) => {
   return useMutation({
     mutationKey: ['delete-payment-order', authorId],
     mutationFn: async ([order, options]: [ValidatorOrder, Options]) => {
-      await new Promise((resolve) => setTimeout(resolve, 1000 * 10 * 6 * 1.5)); // 120000 = 2 minutes
+      await new Promise((resolve) => setTimeout(resolve, 1000)); //1000 * 10 * 6 * 1.5
+
+      console.log('start validation process');
+      console.log('order', order);
       const result = await proxy.post<ValidatorOrderResponse>('/api/web3/validation/validate', order, {
         schema: ValidatorOrderSchema,
       });
@@ -86,6 +89,9 @@ const useDeletePaymentOrder = (authorId: number, onClose?: OnClose) => {
       return { result, options };
     },
     onSuccess: async ({ result: ValidData, options: { type, orderId, array } }) => {
+      console.log('validation process completed');
+      console.log('start delete process');
+      console.log({ result: ValidData, options: { type, orderId, array } });
       switch (true) {
         case ValidData.status === 'success' && type === 'all':
           array.forEach(async (item) => {
@@ -125,3 +131,11 @@ const useDeletePaymentOrder = (authorId: number, onClose?: OnClose) => {
 
 export { useDeletePaymentOrder };
 export type { DeletePaymentOrderFn, Options, ValidatorOrder };
+
+// {
+//     "tx_hash": "9763b214b5d8adb1eb8bdf1774c24faa87039daa7f915a8c85692225ac856158",
+//     "tx_query_id": 1760611901,
+//     "target_address": "UQDU879TifAZNdUt1v60VWNaEXUX3jHgBFR6zfjSMj5TDwcM",
+//     "payment_order_id": "68f0c60adc2f40efdabed5a0",
+//     "status": "pending"
+// }

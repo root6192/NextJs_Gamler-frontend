@@ -57,7 +57,6 @@ export const SwapButton = () => {
         payload: cell.cell,
       })),
     };
-
     await tonConnectUI.sendTransaction(message);
     resetSwapRoute();
   };

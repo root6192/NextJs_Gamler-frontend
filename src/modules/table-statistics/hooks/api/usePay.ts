@@ -4,6 +4,7 @@ import { CHAIN, useTonAddress, useTonConnectUI, type SendTransactionRequest } fr
 import { useAddTransactionHash } from './useAddTransactionHash';
 import type { ValidatorOrder } from './useDeletePaymentOrder';
 import { useDeletePaymentOrder } from './useDeletePaymentOrder';
+import { calcComission } from '@/modules/partner-balance/helpers/calc-comission';
 
 type CreateCellFn<T> = (id: T) => Promise<{ cell: string }>;
 
@@ -38,6 +39,10 @@ const usePay = (authorId: number, modalDisclosureControl?: ModalDisclosureContro
       };
       const { boc } = await tonConnectUI.sendTransaction(message);
       const trHash = Cell.fromBase64(boc).hash().toString('hex');
+
+      console.log(boc, 'boc');
+      console.log(trHash, 'trHash');
+
       if (trHash) modalDisclosureControl?.onOpen();
       return { trHash, validUntil, cell };
     } catch (error) {
@@ -48,7 +53,8 @@ const usePay = (authorId: number, modalDisclosureControl?: ModalDisclosureContro
   const payAllOrders = async (createCell: CreateCellFn<number>, array: Array<{ amount: number; reffererId: number }>) => {
     if (!jettonWallet) return;
     const { cell } = await createCell(authorId);
-    const trRes = await payProcess(cell, array.length * 0.4);
+    const trCost = calcComission(array.length);
+    const trRes = await payProcess(cell, trCost);
     if (!trRes) return;
     const { trHash, validUntil } = trRes;
     const validData: ValidatorOrder = {
@@ -63,7 +69,11 @@ const usePay = (authorId: number, modalDisclosureControl?: ModalDisclosureContro
   const payOrder = async (createCell: CreateCellFn<string>, orderId: string, obj: { amount: number; reffererId: number }) => {
     if (!jettonWallet) return;
     const { cell } = await createCell(orderId);
-    const trRes = await payProcess(cell, 0.4);
+
+    const trCost = calcComission(1);
+    const trRes = await payProcess(cell, trCost);
+    console.log(trRes, 'trRes');
+
     if (!trRes) return;
     const { trHash, validUntil } = trRes;
     const validData: ValidatorOrder = {
@@ -73,6 +83,9 @@ const usePay = (authorId: number, modalDisclosureControl?: ModalDisclosureContro
       payment_order_id: orderId,
       status: 'pending',
     };
+
+    console.log(validData, 'validData');
+
     addTransactionHash({ orderId, trHash });
     deleteOrder([validData, { type: 'single', orderId, array: [obj] }]);
   };

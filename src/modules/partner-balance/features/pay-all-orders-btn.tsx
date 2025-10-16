@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { usePay } from '../../table-statistics/hooks/api/usePay';
 import { usePayAllOrders } from '../../table-statistics/hooks/api/usePayOrder';
 import { usePaymentOrder } from '../../table-statistics/hooks/api/usePaymentOrders';
-import { calcComission } from '../helpers/calc-comission';
+import { hasEnoughForComission } from '../helpers/calc-comission';
 
 export const PayAllOrdersBtn = () => {
   const { data: account } = useAccount();
@@ -31,7 +31,7 @@ export const PayAllOrdersBtn = () => {
 
   const { payAllOrders } = usePay(account?.user_id ?? 0);
 
-  const isBalanceSufficient = calcComission(Number((userTonBalance?.balance ?? 0)), debt_arr.length);
+  const isBalanceSufficient = hasEnoughForComission(Number(userTonBalance?.balance ?? 0), debt_arr.length);
   const handlePayAllOrders = () => (isBalanceSufficient ? payAllOrders(createCell, debt_arr) : toast('Недостаточно средств'));
 
   const isNullDebt = debt_arr.length > 0;
