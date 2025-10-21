@@ -49,3 +49,4 @@ Deploy to prod:
       - cd /www/gamler/gamler_micro
       - sudo systemctl stop gamlermicro
       - sudo systemctl start gamlermicro
+

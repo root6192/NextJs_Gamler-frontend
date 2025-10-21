@@ -6,7 +6,7 @@ WORKDIR /app
 FROM base AS deps
 RUN mkdir -p /temp/dev
 COPY package.json bun.lockb /temp/dev/
-COPY ../.env .env  
+COPY ../.env .env
 RUN cd /temp/dev && bun install --frozen-lockfile
 
 # Сборка приложения
