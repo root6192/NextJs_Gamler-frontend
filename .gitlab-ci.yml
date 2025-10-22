@@ -2,8 +2,7 @@ stages:
   - build
   - deploy
 
-.deploy_guard_prod: &deploy_guard_prod
-   - |
+.deploy_guard_prod: &deploy_guard_prod |
       if [ "${GITLAB_USER_LOGIN:-}" != "yakov" ]; then
         echo "❌ Permission denied"
         exit 1
