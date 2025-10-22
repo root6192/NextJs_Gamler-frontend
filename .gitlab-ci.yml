@@ -2,50 +2,57 @@ stages:
   - build
   - deploy
 
+.deploy_guard_prod: &deploy_guard_prod |
+  if [ "${GITLAB_USER_LOGIN:-}" != "yakov" ]; then
+    echo "❌ Permission denied"
+    exit 1
+  fi
+
 build:
-   tags:
-      - gamlerprod
-   stage: build
-   script:
-      - echo Build
-      - mv env.prod .env
-      - yarn install
-      - yarn build
+  tags:
+    - gamlerprod
+  stage: build
+  script:
+    - echo Build
+    - mv env.prod .env
+    - yarn install
+    - yarn build
 
 Deploy to dev:
-   stage: deploy
-   environment:
-      name: dev
-      url: https://gamler.atma-dev.ru/
-   when: manual
-   tags:
-      - atmadev
-   only:
-      - develop
-   script:
-      - yarn config set registry https://registry.npmjs.org
-      - yarn install
-      - yarn build
-      - rsync --exclude '.git'  --exclude '.gitlab-ci.yml'  -avzh . /www/gamler/gamler_micro
-      - sudo systemctl stop gamlermicro
-      - sudo systemctl start gamlermicro
+  stage: deploy
+  environment:
+    name: dev
+    url: https://gamler.atma-dev.ru/
+  when: manual
+  tags:
+    - atmadev
+  only:
+    - develop
+  script:
+    - yarn config set registry https://registry.npmjs.org
+    - yarn install
+    - yarn build
+    - rsync --exclude '.git'  --exclude '.gitlab-ci.yml'  -avzh . /www/gamler/gamler_micro
+    - sudo systemctl stop gamlermicro
+    - sudo systemctl start gamlermicro
 
 Deploy to prod:
-   stage: deploy
-   environment:
-      name: prod
-      url: https://gamler.online/
-   when: manual
-   tags:
-      - gamlerprod
-   only:
-      - main
-   script:
-      - yarn config set registry https://registry.npmjs.org
-      - mv env.prod .env
-      - yarn install
-      - yarn build
-      - rsync --exclude '.git'  --exclude '.gitlab-ci.yml'  -avzh . /www/gamler/gamler_micro
-      - cd /www/gamler/gamler_micro
-      - sudo systemctl stop gamlermicro
-      - sudo systemctl start gamlermicro
+  stage: deploy
+  environment:
+    name: prod
+    url: https://gamler.online/
+  when: manual
+  tags:
+    - gamlerprod
+  only:
+    - main
+  script:
+    - *deploy_guard_prod
+    - yarn config set registry https://registry.npmjs.org
+    - mv env.prod .env
+    - yarn install
+    - yarn build
+    - rsync --exclude '.git'  --exclude '.gitlab-ci.yml'  -avzh . /www/gamler/gamler_micro
+    - cd /www/gamler/gamler_micro
+    - sudo systemctl stop gamlermicro
+    - sudo systemctl start gamlermicro
