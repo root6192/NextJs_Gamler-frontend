@@ -23,7 +23,6 @@ export default tseslint.config(
         ecmaFeatures: {
           jsx: true,
         },
-        tsconfigRootDir: '.',
         project: './tsconfig.json',
       },
       parser: '@typescript-eslint/parser',
