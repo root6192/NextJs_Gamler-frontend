@@ -18,10 +18,10 @@ type ValidatorOrder = {
 type Options = {
   orderId?: string;
   type: 'all' | 'single';
-  array: Array<{
-    amount: number;
-    reffererId: number;
-  }>;
+  // array: Array<{
+  //   amount: number;
+  //   reffererId: number;
+  // }>;
 };
 
 const ValidationStatus = z.enum(['pending', 'waiting', 'running', 'success', 'failed']);
@@ -35,27 +35,27 @@ const ValidatorOrderSchema = z.object({
 
 type ValidatorOrderResponse = z.infer<typeof ValidatorOrderSchema>;
 
-const UpdateEarningBalanceSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  newBalance: z.number(),
-  amount: z.number(),
-});
+// const UpdateEarningBalanceSchema = z.object({
+//   success: z.boolean(),
+//   message: z.string(),
+//   newBalance: z.number(),
+//   amount: z.number(),
+// });
 
-type UpdateEarningBalanceResponse = z.infer<typeof UpdateEarningBalanceSchema>;
+// type UpdateEarningBalanceResponse = z.infer<typeof UpdateEarningBalanceSchema>;
 
-const updateEarningBalance = async (userId: number, amount: number) => {
-  const balance = await proxy.patch<UpdateEarningBalanceResponse>(
-    `/api/web2/referral/user/${userId}/balance`,
-    {
-      amount: amount,
-    },
-    {
-      schema: UpdateEarningBalanceSchema,
-    },
-  );
-  return balance;
-};
+// const updateEarningBalance = async (userId: number, amount: number) => {
+//   const balance = await proxy.patch<UpdateEarningBalanceResponse>(
+//     `/api/web2/referral/user/${userId}/balance`,
+//     {
+//       amount: amount,
+//     },
+//     {
+//       schema: UpdateEarningBalanceSchema,
+//     },
+//   );
+//   return balance;
+// };
 
 type OnClose = () => void;
 type DeletePaymentOrderFn = UseMutateAsyncFunction<
@@ -88,15 +88,12 @@ const useDeletePaymentOrder = (authorId: number, onClose?: OnClose) => {
 
       return { result, options };
     },
-    onSuccess: async ({ result: ValidData, options: { type, orderId, array } }) => {
+    onSuccess: async ({ result: ValidData, options: { type, orderId } }) => {
       console.log('validation process completed');
       console.log('start delete process');
-      console.log({ result: ValidData, options: { type, orderId, array } });
+      console.log({ result: ValidData, options: { type, orderId } });
       switch (true) {
         case ValidData.status === 'success' && type === 'all':
-          array.forEach(async (item) => {
-            await updateEarningBalance(item.reffererId, item.amount);
-          });
           await proxy.delete<DeletePaymentOrderResponse>('/api/web3/referral/payment-orders/all', {
             params: {
               author_id: authorId,
@@ -108,7 +105,6 @@ const useDeletePaymentOrder = (authorId: number, onClose?: OnClose) => {
           break;
         case ValidData.status === 'success' && type === 'single':
           if (!orderId) throw new Error('Order ID is required');
-          await updateEarningBalance(array[0].reffererId, array[0].amount);
           await proxy.delete<DeletePaymentOrderResponse>(`/api/web3/referral/payment-orders`, {
             schema: z.object({
               message: z.string(),

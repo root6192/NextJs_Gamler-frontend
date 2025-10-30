@@ -5,6 +5,7 @@ import { useAddTransactionHash } from './useAddTransactionHash';
 import type { ValidatorOrder } from './useDeletePaymentOrder';
 import { useDeletePaymentOrder } from './useDeletePaymentOrder';
 import { calcComission } from '@/modules/partner-balance/helpers/calc-comission';
+import type { Level } from './usePaymentOrders';
 
 type CreateCellFn<T> = (id: T) => Promise<{ cell: string }>;
 
@@ -50,7 +51,7 @@ const usePay = (authorId: number, modalDisclosureControl?: ModalDisclosureContro
     }
   };
 
-  const payAllOrders = async (createCell: CreateCellFn<number>, array: Array<{ amount: number; reffererId: number }>) => {
+  const payAllOrders = async (createCell: CreateCellFn<number>, array: Array<Level>) => {
     if (!jettonWallet) return;
     const { cell } = await createCell(authorId);
     const trCost = calcComission(array.length);
@@ -63,14 +64,14 @@ const usePay = (authorId: number, modalDisclosureControl?: ModalDisclosureContro
       target_address: address,
       status: 'pending',
     };
-    deleteOrder([validData, { type: 'all', array }]);
+    deleteOrder([validData, { type: 'all' }]);
   };
 
-  const payOrder = async (createCell: CreateCellFn<string>, orderId: string, obj: { amount: number; reffererId: number }) => {
+  const payOrder = async (createCell: CreateCellFn<string>, orderId: string, array: Array<Level>) => {
     if (!jettonWallet) return;
     const { cell } = await createCell(orderId);
 
-    const trCost = calcComission(1);
+    const trCost = calcComission(array.length);
     console.log(trCost, 'trCost');
 
     const trRes = await payProcess(cell, trCost);
@@ -89,7 +90,7 @@ const usePay = (authorId: number, modalDisclosureControl?: ModalDisclosureContro
     console.log(validData, 'validData');
 
     addTransactionHash({ orderId, trHash });
-    deleteOrder([validData, { type: 'single', orderId, array: [obj] }]);
+    deleteOrder([validData, { type: 'single', orderId }]);
   };
 
   return { payAllOrders, payOrder };

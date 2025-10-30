@@ -1,3 +1,5 @@
+import type { Level } from '@/modules/table-statistics/hooks/api/usePaymentOrders';
+
 const NETWORK_BASE_FEE = 0.05;
 const SERVICE_FEE = 0.2;
 const SMART_CONTRACT_FEE_PER_ITER = 0.5;

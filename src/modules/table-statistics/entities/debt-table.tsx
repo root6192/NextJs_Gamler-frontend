@@ -18,7 +18,11 @@ import type { CreateCellFn } from '../hooks/api/usePay';
 import { usePay } from '../hooks/api/usePay';
 import { usePayOrder } from '../hooks/api/usePayOrder';
 import { usePaymentOrder } from '../hooks/api/usePaymentOrders';
+import type { Level } from '../hooks/api/usePaymentOrders';
 import { TableSkeleton } from '../slices/table-skeleton';
+import { hasEnoughGamler } from '@/modules/partner-balance/helpers/calc-gamlers';
+import { useJettonWallet } from '@/shared/hooks/api/useJettonWallet';
+import { fromNano } from '@ton/core';
 
 export type DebtTableDataType = {
   order_id: string;
@@ -27,6 +31,7 @@ export type DebtTableDataType = {
   debt_amount: number;
   refferal: string;
   refferer_id: number;
+  levels: Level[];
   tr_hash: string | undefined;
 };
 
@@ -58,6 +63,7 @@ export const DebtTable = () => {
         debt_amount: Number(order.total_amount),
         refferer_id: order.referrer_id,
         refferal: order.telegram,
+        levels: order.levels,
         tr_hash: order.tr_hash,
       }))
     : [];
@@ -134,7 +140,7 @@ export const DebtTable = () => {
 
 type ActionColumnProps = {
   record: DebtTableDataType;
-  payOrder: (createCell: CreateCellFn<string>, orderId: string, obj: { amount: number; reffererId: number }) => void;
+  payOrder: (createCell: CreateCellFn<string>, orderId: string, array: Array<Level>) => void;
   createCell: (id: string) => Promise<{ cell: string }>;
   onOpenModal?: () => void;
   deleteOrder: DeletePaymentOrderFn;
@@ -143,16 +149,28 @@ type ActionColumnProps = {
 
 const ActionColumn: FC<ActionColumnProps> = ({ record, payOrder, createCell, deleteOrder, address, onOpenModal }) => {
   const { data: userTonBalance } = useTon(address);
+
+  const {
+    data: jettonWallets,
+    isLoading: isLoadingJettonWallets,
+    isError: isErrorJettonWallets,
+    isSuccess: isSuccessJettonWallets,
+  } = useJettonWallet({ address: address ?? '' });
+  const userGamlerBalance = jettonWallets?.balances.find((balance) => balance.jetton.symbol === 'GMLR');
+
   const isBalanceSufficient = hasEnoughForComission(Number(userTonBalance?.balance ?? 0), 1);
+  const isTokensSufficient = hasEnoughGamler(Number(fromNano(userGamlerBalance?.balance ?? 0)), record.levels);
 
   const handlePayAction = () =>
-    isBalanceSufficient
-      ? payOrder(createCell, record.order_id, { amount: record.debt_amount, reffererId: record.refferer_id })
-      : toast('Недостаточно средств');
+    !isBalanceSufficient
+      ? toast('недостаточно тоннов на балансе')
+      : !isTokensSufficient
+        ? toast('недостаточно гамлеров на балансе')
+        : payOrder(createCell, record.order_id, record.levels);
 
   return (
     <>
-      {record.tr_hash ? (
+      {record.tr_hash && isSuccessJettonWallets ? (
         <a
           key={record.order_id}
           className='cursor-pointer bg-transparent text-start text-[16px] font-medium text-blue-500 underline'
@@ -169,7 +187,6 @@ const ActionColumn: FC<ActionColumnProps> = ({ record, payOrder, createCell, del
               {
                 type: 'single',
                 orderId: record.order_id,
-                array: [{ amount: record.debt_amount, reffererId: record.refferer_id }],
               },
             ]);
           }}>
@@ -183,6 +200,8 @@ const ActionColumn: FC<ActionColumnProps> = ({ record, payOrder, createCell, del
           Погасить задолженность
         </a>
       )}
+
+      {(isErrorJettonWallets || isLoadingJettonWallets) && <Skeleton className='h-[16px] w-full' />}
     </>
   );
 };
