@@ -18,14 +18,14 @@ export default tseslint.config(
         ...globals.node,
       },
       ecmaVersion: 2023,
-      // parserOptions: {
-      //   sourceType: 'module',
-      //   ecmaFeatures: {
-      //     jsx: true,
-      //   },
-      //   tsconfigRootDir: '.',
-      //   project: './tsconfig.json',
-      // },
+      parserOptions: {
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
+        tsconfigRootDir: '.',
+        project: './tsconfig.json',
+      },
       parser: '@typescript-eslint/parser',
     },
   },
